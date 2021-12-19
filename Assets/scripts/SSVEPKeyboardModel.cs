@@ -43,13 +43,29 @@ public class SSVEPKeyboardModel : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		// We call HighFrequency or LowFrequency functions to 
 		if (useSSVEP)  {
+			if (staticObjects.lhratio == 0){
+				;
+			}
+			else if (staticObjects.lhratio < staticObjects.ssvepThreshold){
+				HighFrequency();
+				Debug.Log("HIGH");
+				staticObjects.lhratio = 0;
+			}
+			else{
+				LowFrequency();
+				Debug.Log("LOW");
+				staticObjects.lhratio = 0;
+			}
+			/*	
 			if (_microphoneInput.diffTrigger > _microphoneInput.triggerTime) {
 				HighFrequency();
 			}
 			if (_microphoneInput.diffTrigger < -_microphoneInput.triggerTime) {
 				LowFrequency();
 			}
+			*/
 		}
 	}
 

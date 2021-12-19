@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿	using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UI.Extensions;
 
@@ -12,7 +12,7 @@ public class DiffUI : MonoBehaviour {
 	[SerializeField] private Slider _resetHighSlider;
 
 	public void UpdateDiff (float diff) {
-		_diffSlider.value = diff;
+		//_diffSlider.value = diff;
 	}
 
 	public void UpdateTriggerPercent (float timeProgress) {

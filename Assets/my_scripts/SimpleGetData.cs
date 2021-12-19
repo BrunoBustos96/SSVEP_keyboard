@@ -15,6 +15,10 @@ public class SimpleGetData : MonoBehaviour
     private int sampling_rate = 0;
     private int nfft;
     private int[] eeg_channels;
+    //private double[,] empty_data = null;
+
+    private float timeRemaining = 2;
+
     
     // Start is called before the first frame update
     void Start()
@@ -64,30 +68,44 @@ public class SimpleGetData : MonoBehaviour
         double[,] data = board_shim.get_current_board_data(number_of_data_points);
         // check https://brainflow.readthedocs.io/en/stable/index.html for api ref and more code samples
         //Debug.Log(data.GetRow (eeg_channels[2]));
-        Debug.Log("Num elements: " + data.GetLength(1));
+        //Debug.Log("Num elements: " + data.GetLength(1));
 
         nfft = DataFilter.get_nearest_power_of_two(sampling_rate);
         //Debug.Log("Nfft:"+nfft);
         
 
         //Band Power
+        
         int channel = eeg_channels[1];
 
         double[] detrend = DataFilter.detrend(data.GetRow(channel), (int)DetrendOperations.LINEAR);
+        int overlap = nfft/2;
+        //Debugging prints
+        /*
         print("Detrend: ");
         Debug.Log(string.Join (", ", detrend));
         Debug.Log(detrend.GetType());
         Debug.Log(nfft.GetType());
-        int overlap = nfft/2;
+        
         Debug.Log(overlap.GetType());
         Debug.Log(sampling_rate.GetType());
         Debug.Log(((int)WindowFunctions.HANNING).GetType());
+        */
         
-        Tuple<double[], double[]> psd = DataFilter.get_psd_welch (detrend, nfft, overlap, sampling_rate, (int)WindowFunctions.HANNING);
+        // Every 2 seconds Low / High ratio is computed
+        if(timeRemaining>0){
+            timeRemaining -= Time.deltaTime;
+        }else{
+            timeRemaining = 2;
+
+            Tuple<double[], double[]> psd = DataFilter.get_psd_welch (detrend, nfft, overlap, sampling_rate, (int)WindowFunctions.HANNING);
             //Tuple<double[], double[]> psd = DataFilter.get_psd_welch (data.GetRow (eeg_channels[i]), nfft, nfft / 2, sampling_rate, (int)WindowFunctions.HANNING);
-        double band_power_alpha = DataFilter.get_band_power (psd, 7.0, 13.0);
-        double band_power_beta = DataFilter.get_band_power (psd, 14.0, 30.0);
-        Console.WriteLine ("Alpha/Beta Ratio:" + (band_power_alpha/ band_power_beta));
+            double band_power_low = DataFilter.get_band_power (psd, 4.0, 17.0);
+            double band_power_high = DataFilter.get_band_power (psd, 18.0, 30.0);
+            staticObjects.lhratio  = band_power_low/ band_power_high;
+            Debug.Log("Low/High Ratio: " + staticObjects.lhratio);
+            
+        }
         
         
         for (int i = 0; i < eeg_channels.Length; i++){
@@ -108,18 +126,6 @@ public class SimpleGetData : MonoBehaviour
             */
             
             
-            
-
-            /*
-            Tuple<double[], double[]> bands = DataFilter.get_avg_band_powers (data, eeg_channels, sampling_rate, true);
-            double[] feature_vector = bands.Item1.Concatenate (bands.Item2);
-            BrainFlowModelParams model_params = new BrainFlowModelParams ((int)BrainFlowMetrics.CONCENTRATION, (int)BrainFlowClassifiers.REGRESSION);
-            MLModel concentration = new MLModel (model_params);
-            concentration.prepare ();
-            Console.WriteLine ("Concentration: " + concentration.predict (feature_vector));
-            concentration.release ();
-            
-            */
         }
         
 
