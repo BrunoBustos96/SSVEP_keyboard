@@ -45,7 +45,7 @@ public class SSVEPKeyboardModel : MonoBehaviour {
 	void Update () {
 		// We call HighFrequency or LowFrequency functions to 
 		if (useSSVEP)  {
-			if (staticObjects.lhratio == 0){
+			if (staticObjects.lhratio == 0.0){
 				;
 			}
 			else if (staticObjects.lhratio < staticObjects.ssvepThreshold){

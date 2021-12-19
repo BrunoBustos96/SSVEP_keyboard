@@ -9,6 +9,7 @@ using UnityEngine;
 using brainflow;
 using brainflow.math;
 
+
 public class SimpleGetData : MonoBehaviour
 {
     private BoardShim board_shim = null;
@@ -23,6 +24,7 @@ public class SimpleGetData : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
         try
         {
             BoardShim.set_log_file("brainflow_log.txt");
@@ -30,8 +32,9 @@ public class SimpleGetData : MonoBehaviour
             BoardShim.enable_dev_board_logger();
 
             BrainFlowInputParams input_params = new BrainFlowInputParams();
-            int board_id = (int)BoardIds.SYNTHETIC_BOARD;
-
+            //int board_id = (int)BoardIds.SYNTHETIC_BOARD;
+            int board_id = (int)BoardIds.CYTON_BOARD;
+            input_params.serial_port = "COM3";
             BoardDescr board_descr = BoardShim.get_board_descr<BoardDescr>(board_id);
             sampling_rate = board_descr.sampling_rate;
             
@@ -39,14 +42,11 @@ public class SimpleGetData : MonoBehaviour
 
             board_shim = new BoardShim(board_id, input_params);
             board_shim.prepare_session();
-            board_shim.start_stream(450000, "file://brainflow_data.csv:w");
+            board_shim.start_stream(450000, "streaming_board://225.1.1.1:6677");
             //sampling_rate = BoardShim.get_sampling_rate(board_id);
             //eeg_channels = BoardShim.get_eeg_channels(board_id);
 
-            eeg_channels = board_descr.eeg_channels;
-            
-            // use second channel of synthetic board to see 'alpha'
-            
+            eeg_channels = board_descr.eeg_channels;            
 
             Debug.Log("Brainflow streaming was started");
             
@@ -76,10 +76,7 @@ public class SimpleGetData : MonoBehaviour
 
         //Band Power
         
-        int channel = eeg_channels[1];
-
-        double[] detrend = DataFilter.detrend(data.GetRow(channel), (int)DetrendOperations.LINEAR);
-        int overlap = nfft/2;
+        
         //Debugging prints
         /*
         print("Detrend: ");
@@ -96,37 +93,34 @@ public class SimpleGetData : MonoBehaviour
         if(timeRemaining>0){
             timeRemaining -= Time.deltaTime;
         }else{
+
             timeRemaining = 2;
+            float sum = 0;
 
-            Tuple<double[], double[]> psd = DataFilter.get_psd_welch (detrend, nfft, overlap, sampling_rate, (int)WindowFunctions.HANNING);
-            //Tuple<double[], double[]> psd = DataFilter.get_psd_welch (data.GetRow (eeg_channels[i]), nfft, nfft / 2, sampling_rate, (int)WindowFunctions.HANNING);
-            double band_power_low = DataFilter.get_band_power (psd, 4.0, 17.0);
-            double band_power_high = DataFilter.get_band_power (psd, 18.0, 30.0);
-            staticObjects.lhratio  = band_power_low/ band_power_high;
-            Debug.Log("Low/High Ratio: " + staticObjects.lhratio);
-            
-        }
-        
-        
-        for (int i = 0; i < eeg_channels.Length; i++){
-            /*
-            Tuple<double[], int[]> wavelet_data = DataFilter.perform_wavelet_transform(data.GetRow (eeg_channels[i]), "db4", 3);
-            for (int j = 0; j < wavelet_data.Item2[0]; j++){
-                Console.Write (wavelet_data.Item1[j] + " ");
+            double[] filtered;
+
+            for (int i = 0; i < eeg_channels.Length/2; i++){ //Taking only half of the channels to compute the ratio
+                int channel = eeg_channels[i];
+
+                filtered = DataFilter.remove_environmental_noise(data.GetRow(channel), sampling_rate, (int)NoiseTypes.FIFTY);
+
+
+                //double[] detrend = DataFilter.detrend(filtered.GetRow(channel), (int)DetrendOperations.LINEAR);
+                double[] detrend = DataFilter.detrend(filtered, (int)DetrendOperations.LINEAR);
+                int overlap = nfft/2;
+                Tuple<double[], double[]> psd = DataFilter.get_psd_welch (detrend, nfft, overlap, sampling_rate, (int)WindowFunctions.HANNING);
+                //Tuple<double[], double[]> psd = DataFilter.get_psd_welch (data.GetRow (eeg_channels[i]), nfft, nfft / 2, sampling_rate, (int)WindowFunctions.HANNING);
+                double band_power_low = DataFilter.get_band_power (psd, 14.0, 16.0);
+                double band_power_high = DataFilter.get_band_power (psd, 19.0, 21.0);
+                //Debug.Log("Low/High Ratio Channel "+(i+1)+": " + (band_power_low/ band_power_high));
+                sum = sum + ((float)band_power_low/ (float)band_power_high);
             }
-            */
-
-            //Fast Fourier Transform
-            /*
-            Complex[] fft_data = DataFilter.perform_fft (data.GetRow (eeg_channels[i]), 0, 64, (int)WindowFunctions.HAMMING);
-            print(fft_data.Length);
-            Console.WriteLine ("Fft data:");
-            Console.WriteLine ("FFT [{0}]", string.Join (", ", fft_data));
-            Debug.Log(string.Join (", ", fft_data));
-            */
+            Debug.Log("Average Low/High Ratio: "+(sum / eeg_channels.Length));
+            staticObjects.lhratio  = (sum / eeg_channels.Length);
             
             
         }
+        
         
 
     }

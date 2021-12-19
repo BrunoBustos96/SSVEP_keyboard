@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class staticObjects : MonoBehaviour
 {
-    public static double lhratio = 0;
-    public static double ssvepThreshold = 2800;
+    public static string[] ports_names;
+    public static float lhratio = 0.0f;
+    public static float ssvepThreshold = 0.3f;
 }
