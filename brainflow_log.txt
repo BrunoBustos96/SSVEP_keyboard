@@ -3709,3 +3709,7 @@
 [2021-12-19 18:43:23.710] [board_logger] [trace] MultiCast Streamer, ip addr: 225.1.1.1, port: 6677
 [2021-12-19 18:43:23.710] [board_logger] [debug] sending b to the board
 [2021-12-19 18:45:11.434] [board_logger] [debug] sending s to the board
+[2022-01-09 22:34:51.526] [board_logger] [info] incoming json: {"file":"","ip_address":"","ip_port":0,"ip_protocol":0,"mac_address":"","other_info":"","serial_number":"","serial_port":"COM3","timeout":0}
+[2022-01-09 22:34:51.526] [board_logger] [trace] Board object created 0
+[2022-01-09 22:34:51.526] [board_logger] [info] opening port \\.\COM3
+[2022-01-09 22:34:51.526] [board_logger] [error] Make sure you provided correct port name and have permissions to open it(run with sudo/admin). Also, close all other apps using this port.
